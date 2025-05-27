@@ -1,4 +1,9 @@
 <?php
+// Afficher les erreurs PHP (à enlever en production)
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
 // Connexion PDO
 $host = 'localhost';
 $db   = 'u68662';
@@ -59,7 +64,7 @@ if (!is_array($languages) || count(array_intersect($languages, $allowed_language
 
 $bio = $_POST['bio'] ?? '';
 
-$agreed_contract = isset($_POST['agreed_contract']) ? true : false;
+$agreed_contract = isset($_POST['agreed_contract']) ? 1 : 0;
 if (!$agreed_contract) {
     $errors[] = "Vous devez accepter le contrat.";
 }
@@ -78,12 +83,12 @@ if (!empty($errors)) {
 try {
     $pdo->beginTransaction();
 
-    $stmtUser = $pdo->prepare("INSERT INTO users (fullname, phone, email, birthdate, gender, bio, agreed_contract) VALUES (?, ?, ?, ?, ?, ?, ?)");
+    $stmtUser = $pdo->prepare("INSERT INTO users (fullname, phone, email, birthdate, gender, bio, contract) VALUES (?, ?, ?, ?, ?, ?, ?)");
     $stmtUser->execute([$fullname, $phone, $email, $birthdate, $gender, $bio, $agreed_contract]);
 
     $userId = $pdo->lastInsertId();
 
-    $stmtLang = $pdo->prepare("INSERT INTO languages (user_id, language) VALUES (?, ?)");
+    $stmtLang = $pdo->prepare("INSERT INTO user_languages (user_id, language) VALUES (?, ?)");
     foreach ($languages as $lang) {
         $stmtLang->execute([$userId, $lang]);
     }
@@ -95,4 +100,7 @@ try {
 
 } catch (Exception $e) {
     $pdo->rollBack();
-    echo "<div style='color:red;'>Erreur lors de l'enregistrement : " . htmlspecialchars($e->getMessage()) . "</div
+    echo "<div style='color:red;'>Erreur lors de l'enregistrement : " . htmlspecialchars($e->getMessage()) . "</div>";
+    echo "<a href='javascript:history.back()'>Retour au formulaire</a>";
+}
+
